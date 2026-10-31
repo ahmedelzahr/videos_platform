@@ -83,7 +83,7 @@ class VideoConverter
     }
     Storage::disk('public')->delete($this->video->video_path);
     $hours=floor($videoData->getVideoDurationInSeconds()/3600);
-    $minutes=floor($videoData->getVideoDurationInSeconds()/60);
+    $minutes=floor($videoData->getVideoDurationInSeconds()/60)%60;
     $seconds=$videoData->getVideoDurationInSeconds()%60;
     $this->video->hours=$hours;
     $this->video->minutes=$minutes;
