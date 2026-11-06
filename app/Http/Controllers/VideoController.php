@@ -58,7 +58,7 @@ class VideoController extends Controller
         ]);
         ConvertVideoJob::dispatch($video);
 
-        return back()->with('success', __('Your Video Converted Successfully'));
+        return back()->with('success', __('The Video will be available after processing it'));
     }
 
     /**

@@ -31,7 +31,7 @@ class VideoConverter
 
     public function getFilter($format, $kiloBitrate)
     {
-        return $format == Format::MP4 ? (new X264('aac', 'libx264'))->setKiloBitrate($kiloBitrate) : (new WebM('libvorbis', 'libvpx'))->setKiloBitrate($kiloBitrate);
+        return $format == Format::MP4->value ? (new X264('aac', 'libx264'))->setKiloBitrate($kiloBitrate) : (new WebM('libvorbis', 'libvpx'))->setKiloBitrate($kiloBitrate);
     }
 
     private function convertOneVideo($filter, $convertedName, $width, $height)
@@ -39,7 +39,7 @@ class VideoConverter
         FFMpeg::fromDisk($this->video->disk)
             ->open($this->video->video_path)
             ->export()
-            ->toDisk(env('FILESYSTEM_DISK'))
+            ->toDisk(config('filesystems.default'))
             ->inFormat($filter)
             ->addFilter(function (VideoFilters $filters) use ($width, $height) {
                 $filters->resize(new Dimension($width, $height));
@@ -75,13 +75,13 @@ class VideoConverter
                 $this->convertOneVideo($mp4Filter, $convertedMP4Name, VideoSetup::$dimensions[$key][0], VideoSetup::$dimensions[$key][1]);
                 $this->convertOneVideo($webmFilter, $convertedWebmName, VideoSetup::$dimensions[$key][0], VideoSetup::$dimensions[$key][1]);
             }
-            $this->saveConvertedVideo($this->video->id,Format::MP4->value,env('FILESYSTEM_DISK'),$convertedMP4Name,(string)$key);
-            $this->saveConvertedVideo($this->video->id,Format::WEBM->value,env('FILESYSTEM_DISK'),$convertedWebmName,(string)$key);
+            $this->saveConvertedVideo($this->video->id,Format::MP4->value,config('filesystems.default'),$convertedMP4Name,(string)$key);
+            $this->saveConvertedVideo($this->video->id,Format::WEBM->value,config('filesystems.default'),$convertedWebmName,(string)$key);
             if ($videoData->getVideoQuality() == $key) {
                 break;
         }
     }
-    Storage::disk('public')->delete($this->video->video_path);
+    Storage::disk($this->video->disk)->delete($this->video->video_path);
     $hours=floor($videoData->getVideoDurationInSeconds()/3600);
     $minutes=floor($videoData->getVideoDurationInSeconds()/60)%60;
     $seconds=$videoData->getVideoDurationInSeconds()%60;
@@ -90,6 +90,7 @@ class VideoConverter
     $this->video->seconds=$seconds;
     $this->video->longitudinal=$videoData->isLongitudinal();
     $this->video->processed=true;
+    $this->video->quality=$videoData->getVideoQuality();
     $this->video->save();
 }
 }
